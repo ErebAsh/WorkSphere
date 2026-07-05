@@ -36,7 +36,14 @@ jobs:
             ✅ Expected behavior
             ✅ Screenshots if possible
 
-            The maintainers will review it shortly.`;
+            The maintainers will review it shortly.
+
+            ---
+            💡 **Connect & Support:**
+            - ⭐ Star the [WorkSphere repository](https://github.com/SatyamPandey-07/WorkSphere) to show your support!
+            - 👤 Follow the maintainer on GitHub: [@SatyamPandey-07](https://github.com/SatyamPandey-07)
+            - 💼 Connect on LinkedIn: [Satyam Pandey](https://www.linkedin.com/in/satyam-pandey-0b246432a/)
+            - 💬 Have questions or queries? Join our [WhatsApp Group](https://chat.whatsapp.com/D3pfq0vSmwd0iR0dFNjj43) or contact via phone at \`+91 9820966720\`.`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -67,7 +74,14 @@ jobs:
 
             ✅ Tests pass
             ✅ No secrets committed
-            ✅ Documentation updated`;
+            ✅ Documentation updated
+
+            ---
+            💡 **Connect & Support:**
+            - ⭐ Star the [WorkSphere repository](https://github.com/SatyamPandey-07/WorkSphere) to show your support!
+            - 👤 Follow the maintainer on GitHub: [@SatyamPandey-07](https://github.com/SatyamPandey-07)
+            - 💼 Connect on LinkedIn: [Satyam Pandey](https://www.linkedin.com/in/satyam-pandey-0b246432a/)
+            - 💬 Have questions or queries? Join our [WhatsApp Group](https://chat.whatsapp.com/D3pfq0vSmwd0iR0dFNjj43) or contact via phone at \`+91 9820966720\`.`;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
