@@ -52,8 +52,8 @@ export default function SiteFooter() {
       { name: "Open Source", href: "https://github.com/SatyamPandey-07/WorkSphere", external: true },
     ],
     legal: [
-      { name: "Privacy Policy", href: "#" },
-      { name: "Terms of Service", href: "#" },
+      { name: "Privacy Policy", href: "/privacy" },
+      { name: "Terms of Service", href: "/terms" },
       { name: "Cookie Settings", href: "#" },
     ],
   };
