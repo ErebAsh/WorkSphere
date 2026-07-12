@@ -5,7 +5,7 @@ import Image from "next/image";
 import {
   MapPin, Wifi, Zap, Volume2, Clock, Sparkles, Download,
   ArrowRight, Coffee, Camera, Radio, Star, Users, Building2,
-  ChevronRight, FileText, BarChart3, ArrowUp
+  ChevronRight, FileText, BarChart3, ArrowUp, ShieldCheck, Server, Terminal, Globe, Filter, LayoutGrid
 } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
@@ -73,6 +73,13 @@ export default function Home() {
               >
                 <Coffee className="w-4 h-4" />
                 Dashboard
+              </Link>
+              <Link
+                href="/collections"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm text-white/70 hover:text-white font-medium transition-colors whitespace-nowrap"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Collections
               </Link>
               <div className="flex items-center justify-center w-8 h-8 rounded-full overflow-hidden shrink-0">
                 <UserButton afterSignOutUrl="/" />

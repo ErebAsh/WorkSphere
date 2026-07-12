@@ -29,6 +29,9 @@ model User {
   isAdmin        Boolean            @default(false)
   flagsReported  FlaggedItem[]
   adminAuditLogs AdminAuditLog[]
+  ownedFolders   Folder[]           @relation("FolderOwner")
+  folderMemberships FolderMember[]  @relation("FolderMembership")
+  addedFolderVenues FolderVenue[]   @relation("FolderVenueAdder")
 }
 
 model Venue {
@@ -70,6 +73,7 @@ model Venue {
   @@index([latitude, longitude])
   @@index([category])
   validations     AmenityValidation[]
+  folderVenues    FolderVenue[]
 }
 
 model VenueRating {
@@ -347,3 +351,54 @@ model AdminAuditLog {
   details     String?
   createdAt   DateTime @default(now())
 }
+
+model Folder {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  owner       User           @relation("FolderOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  inviteToken String?        @unique
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  
+  venues      FolderVenue[]
+  members     FolderMember[]
+
+  @@index([ownerId])
+}
+
+model FolderVenue {
+  id        String   @id @default(cuid())
+  folderId  String
+  folder    Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  addedById String
+  addedBy   User     @relation("FolderVenueAdder", fields: [addedById], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([folderId, venueId])
+  @@index([folderId])
+}
+
+model FolderMember {
+  id        String     @id @default(cuid())
+  folderId  String
+  folder    Folder     @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation("FolderMembership", fields: [userId], references: [id], onDelete: Cascade)
+  role      FolderRole @default(MEMBER)
+  joinedAt  DateTime   @default(now())
+
+  @@unique([folderId, userId])
+  @@index([folderId])
+  @@index([userId])
+}
+
+enum FolderRole {
+  OWNER
+  EDITOR
+  MEMBER
+}
+

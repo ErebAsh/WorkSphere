@@ -5,6 +5,8 @@ import { Star, Wifi, Zap, Volume2, Navigation, Heart, MessageSquare, Clock, Exte
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { NoiseTimeChart } from "@/components/noise/NoiseTimeChart";
+import { AddToFolderModal } from "@/components/collections/AddToFolderModal";
+import { FolderPlus } from "lucide-react";
 
 interface VenueEnrichData {
   found: boolean;
@@ -48,6 +50,7 @@ export function VenueCard({
   const [enrichData, setEnrichData] = useState<VenueEnrichData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [showFolderModal, setShowFolderModal] = useState(false);
 
   // =========================================================================
   // COMMUNITY VERIFICATION VOTE STATE TRACKING SYSTEM
@@ -368,6 +371,15 @@ export function VenueCard({
             <MessageSquare className="w-4 h-4" />
             Rate
           </button>
+          {venue.id && (
+            <button
+              onClick={() => setShowFolderModal(true)}
+              className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+              title="Add to Collection"
+            >
+              <FolderPlus className="w-4 h-4" />
+            </button>
+          )}
           {enrichData?.website && (
             <a
               href={enrichData.website}
@@ -395,6 +407,12 @@ export function VenueCard({
 )}
         </div>
       </div>
+      {showFolderModal && venue.id && (
+        <AddToFolderModal
+          venueId={venue.id}
+          onClose={() => setShowFolderModal(false)}
+        />
+      )}
     </div>
   );
 }

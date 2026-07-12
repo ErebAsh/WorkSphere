@@ -198,6 +198,15 @@ export function ChatHeader({
                         <Inbox className="w-4 h-4" />
                     </button>
 
+                    {/* Collections */}
+                    <Link
+                        href="/collections"
+                        className="p-2 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-blue-600 hover:text-white transition-all active:scale-95"
+                        title="Collections"
+                    >
+                        <LayoutGrid className="w-4 h-4" />
+                    </Link>
+
                     {/* History */}
                     <button
                         onClick={() => { setShowHistory(!showHistory); setShowFilters(false); }}
