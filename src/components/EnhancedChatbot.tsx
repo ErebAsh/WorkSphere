@@ -62,6 +62,9 @@ interface Filters {
   ergonomic?: boolean;
   outletDensity?: "every_table" | "some_tables" | "wall_seats" | "none";
   wifiSpeedBand?: "basic" | "fast" | "ultra" | "all";
+  hasPhoneBooths?: boolean;
+  hasNoMusic?: boolean;
+  hasQuietZone?: boolean;
 }
 
 interface Conversation {
@@ -382,7 +385,16 @@ export function EnhancedChatbot({ onMapUpdate, onOpenDetails, onBook, userLocati
     wifiQuality: number;
     hasOutlets: boolean;
     noiseLevel: "quiet" | "moderate" | "loud";
+    avgDecibels?: number;
+    peakDecibels?: number;
     comment?: string;
+    hasErgonomic: boolean;
+    outletDensity: "every_table" | "some_tables" | "wall_seats" | "none";
+    wifiSpeed?: number;
+    speedtestPhoto?: string;
+    hasPhoneBooths?: boolean;
+    hasNoMusic?: boolean;
+    hasQuietZone?: boolean;
   }) => {
     if (!ratingVenue || !isSignedIn) return;
     try {

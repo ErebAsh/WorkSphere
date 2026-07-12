@@ -27,13 +27,16 @@ export async function GET(req: NextRequest) {
       ergonomic: searchParams.get("ergonomic"),
       outletDensity: searchParams.get("outletDensity"),
       wifiSpeedBand: searchParams.get("wifiSpeedBand"),
+      hasPhoneBooths: searchParams.get("hasPhoneBooths"),
+      hasNoMusic: searchParams.get("hasNoMusic"),
+      hasQuietZone: searchParams.get("hasQuietZone"),
     });
 
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const { lat, lng, radius, category, wifi, outlets, quiet, ergonomic, outletDensity, wifiSpeedBand } = validation.data;
+    const { lat, lng, radius, category, wifi, outlets, quiet, ergonomic, outletDensity, wifiSpeedBand, hasPhoneBooths, hasNoMusic, hasQuietZone } = validation.data;
 
     // Simple bounding box search (for PostgreSQL without PostGIS)
     // Approximate: 1 degree ≈ 111km
@@ -91,6 +94,18 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    if (hasPhoneBooths) {
+      where.hasPhoneBooths = true;
+    }
+
+    if (hasNoMusic) {
+      where.hasNoMusic = true;
+    }
+
+    if (hasQuietZone) {
+      where.hasQuietZone = true;
+    }
+
     const venues = await prisma.venue.findMany({
       where,
       include: {
@@ -127,7 +142,7 @@ export async function POST(req: NextRequest) {
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
-    const { name, latitude, longitude, category, address, wifiQuality, hasOutlets, noiseLevel, hasErgonomic, outletDensity, wifiSpeed } = validation.data;
+    const { name, latitude, longitude, category, address, wifiQuality, hasOutlets, noiseLevel, hasErgonomic, outletDensity, wifiSpeed, hasPhoneBooths, hasNoMusic, hasQuietZone } = validation.data;
     const { placeId, rating, imageUrl } = body; // placeId, rating, imageUrl are additional fields
 
     // Validate placeId (required for upsert)
@@ -166,6 +181,9 @@ export async function POST(req: NextRequest) {
         hasErgonomic,
         outletDensity,
         wifiSpeed,
+        hasPhoneBooths,
+        hasNoMusic,
+        hasQuietZone,
         crowdsourced: true,
         requiresReview,
         ...(imageUrl && { imageUrl }),
@@ -184,6 +202,9 @@ export async function POST(req: NextRequest) {
         hasErgonomic: hasErgonomic || false,
         outletDensity: outletDensity || "none",
         wifiSpeed: wifiSpeed || null,
+        hasPhoneBooths: hasPhoneBooths || false,
+        hasNoMusic: hasNoMusic || false,
+        hasQuietZone: hasQuietZone || false,
         crowdsourced: true,
         requiresReview,
         imageUrl,

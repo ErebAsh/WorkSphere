@@ -41,6 +41,9 @@ model Venue {
   hasOutlets     Boolean            @default(false)
   noiseLevel     String? // quiet, moderate, loud
   hasErgonomic   Boolean            @default(false)
+  hasPhoneBooths Boolean            @default(false)
+  hasNoMusic     Boolean            @default(false)
+  hasQuietZone   Boolean            @default(false)
   outletDensity  String? // every_table, some_tables, wall_seats, none
   wifiSpeed      Int? // in Mbps
   crowdsourced   Boolean            @default(false)
@@ -76,6 +79,9 @@ model VenueRating {
   hasOutlets    Boolean
   noiseLevel    String // quiet, moderate, loud
   hasErgonomic  Boolean  @default(false)
+  hasPhoneBooths Boolean  @default(false)
+  hasNoMusic     Boolean  @default(false)
+  hasQuietZone   Boolean  @default(false)
   outletDensity String? // every_table, some_tables, wall_seats, none
   wifiSpeed     Int? // in Mbps
   comment       String?
