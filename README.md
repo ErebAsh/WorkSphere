@@ -32,14 +32,12 @@ Automated contributor tracking synced directly via the GitHub API:
 
 ## 📋 Table of Contents
 
-- [Recent Updates](#-recent-updates-mar-7-2026)
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
 - [Architecture](#-architecture)
 - [Getting Started](#-getting-started)
 - [Environment Variables](#-environment-variables)
 - [Testing](#-testing)
-- [Database Schema](#-database-schema)
 - [Pages](#-pages)
 - [API Routes](#-api-routes)
 - [Multi-Agent System](#-multi-agent-system)
@@ -50,23 +48,7 @@ Automated contributor tracking synced directly via the GitHub API:
 
 ---
 
-## ✨ Recent Updates (Mar 8, 2026 - 24 Hour Sprint)
 
-| Area | Change |
-|------|--------|
-| ⭐ **Venue Rating System** | Built comprehensive rating dialog with WiFi quality, power outlets, noise levels, quietness |
-| 📊 **Profile Dashboard** | Complete user analytics dashboard with "NEURAL LEDGER" booking history |
-| 📄 **PDF Receipt Generation** | Serverless-compatible PDF receipts using **pdf-lib** (fixed PDFKit font loading issues) |
-| 💾 **Download Receipts** | Download button for each booking with loading states and automatic file download |
-| 🔗 **External Link to Map** | View any booked venue on the map from booking history with coordinate validation |
-| 📝 **Venue Submission** | Users can submit new venues via modal form with full data collection |
-| 📸 **Venue Photos** | Migrated from Unsplash → **Pexels API** (20k req/mo free, no billing required) |
-| 📡 **Real-time Updates** | Added **Server-Sent Events (SSE)** stream — live ratings & crowd levels appear instantly |
-| 🎨 **Landing Page** | Complete redesign: dark theme, animated blobs, stats strip, 8 feature cards |
-| 🔒 **Security** | Photo API key proxied server-side — never reaches the browser |
-| 🐛 **Critical Fixes** | Fixed Vercel build errors: Buffer handling, cuid string IDs, coordinate validation |
-
----
 
 ## ✨ Features
 
@@ -369,75 +351,7 @@ PEXELS_API_KEY=your_pexels_key_here
 
 ---
 
-## 📊 Database Schema
 
-```prisma
-model User {
-  id            String         @id
-  email         String?        @unique
-  createdAt     DateTime       @default(now())
-  favorites     Favorite[]
-  ratings       VenueRating[]
-  conversations Conversation[]
-}
-
-model Venue {
-  id           String        @id @default(cuid())
-  placeId      String        @unique
-  name         String
-  latitude     Float
-  longitude    Float
-  category     String        // cafe, coworking, library
-  address      String?
-  rating       Float?
-  wifiQuality  Int?          // 1-5 scale
-  hasOutlets   Boolean       @default(false)
-  noiseLevel   String?       // quiet, moderate, loud
-  crowdsourced Boolean       @default(false)
-  createdAt    DateTime      @default(now())
-  ratings      VenueRating[]
-  favorites    Favorite[]
-}
-
-model VenueRating {
-  id          String   @id @default(cuid())
-  userId      String
-  venueId     String
-  wifiQuality Int      // 1-5
-  hasOutlets  Boolean
-  noiseLevel  String   // quiet, moderate, loud
-  comment     String?
-  createdAt   DateTime @default(now())
-  @@unique([userId, venueId])
-}
-
-model Favorite {
-  id        String   @id @default(cuid())
-  userId    String
-  venueId   String
-  createdAt DateTime @default(now())
-  @@unique([userId, venueId])
-}
-
-model Conversation {
-  id        String    @id @default(cuid())
-  userId    String
-  title     String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  messages  Message[]
-}
-
-model Message {
-  id             String       @id @default(cuid())
-  conversationId String
-  role           String       // user, assistant
-  content        String
-  createdAt      DateTime     @default(now())
-}
-```
-
----
 
 ## � Pages
 
