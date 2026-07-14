@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUser, useAuth } from "@clerk/nextjs";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMultiplayerSession } from "@/hooks/useRealTime";
@@ -115,7 +115,7 @@ export function EnhancedChatbot({
 }: EnhancedChatbotProps) {
   const { isSignedIn, user } = useUser();
 
-  const { socket, yDoc: _yDoc } = useMultiplayerSession(roomId || null);
+  const { socket } = useMultiplayerSession(roomId || null);
   const { getToken } = useAuth();
 
   // Presence state
@@ -212,8 +212,7 @@ export function EnhancedChatbot({
 
     socket.addEventListener("message", onMessage);
     return () => socket.removeEventListener("message", onMessage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket]);
+  }, [socket, onMapUpdate]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -526,6 +525,11 @@ export function EnhancedChatbot({
     hasNoMusic?: boolean;
     hasQuietZone?: boolean;
     musicStyle?: string;
+    petsAllowedIndoors?: boolean;
+    patioOnly?: boolean;
+    waterBowlsProvided?: boolean;
+    dogFriendly?: boolean;
+    catsAllowed?: boolean;
   }) => {
     if (!ratingVenue || !isSignedIn) return;
     try {

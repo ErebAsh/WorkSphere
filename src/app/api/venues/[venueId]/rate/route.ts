@@ -51,6 +51,11 @@ export async function POST(
       musicStyle,
       powerTypes,
       outletLocations,
+      petsAllowedIndoors,
+      patioOnly,
+      waterBowlsProvided,
+      dogFriendly,
+      catsAllowed,
     } = validation.data;
     const { venue: venueData } = body; // venue data for creating new venues
 
@@ -102,6 +107,11 @@ export async function POST(
         musicStyle,
         powerTypes: powerTypes || [],
         outletLocations: outletLocations || [],
+        petsAllowedIndoors,
+        patioOnly,
+        waterBowlsProvided,
+        dogFriendly,
+        catsAllowed,
       },
       create: {
         userId,
@@ -123,6 +133,11 @@ export async function POST(
         musicStyle,
         powerTypes: powerTypes || [],
         outletLocations: outletLocations || [],
+        petsAllowedIndoors: petsAllowedIndoors || false,
+        patioOnly: patioOnly || false,
+        waterBowlsProvided: waterBowlsProvided || false,
+        dogFriendly: dogFriendly || false,
+        catsAllowed: catsAllowed || false,
       },
     });
 
@@ -239,6 +254,25 @@ export async function POST(
       Object.keys(musicCounts).length > 0
         ? Object.entries(musicCounts).reduce((a, b) => (b[1] > a[1] ? b : a))[0]
         : null;
+    const petsAllowedIndoorsPercent =
+      (allRatings.filter((r: any) => r.petsAllowedIndoors).length /
+        allRatings.length) *
+      100;
+    const patioOnlyPercent =
+      (allRatings.filter((r: any) => r.patioOnly).length / allRatings.length) *
+      100;
+    const waterBowlsPercent =
+      (allRatings.filter((r: any) => r.waterBowlsProvided).length /
+        allRatings.length) *
+      100;
+    const dogFriendlyPercent =
+      (allRatings.filter((r: any) => r.dogFriendly).length /
+        allRatings.length) *
+      100;
+    const catsAllowedPercent =
+      (allRatings.filter((r: any) => r.catsAllowed).length /
+        allRatings.length) *
+      100;
 
     await prisma.venue.update({
       where: { id: finalVenueId },
@@ -256,6 +290,11 @@ export async function POST(
         musicStyle: dominantMusic,
         powerTypes: aggregatedPowerTypes,
         outletLocations: aggregatedOutletLocations,
+        petsAllowedIndoors: petsAllowedIndoorsPercent > 50,
+        patioOnly: patioOnlyPercent > 50,
+        waterBowlsProvided: waterBowlsPercent > 50,
+        dogFriendly: dogFriendlyPercent > 50,
+        catsAllowed: catsAllowedPercent > 50,
         crowdsourced: true,
       },
     });

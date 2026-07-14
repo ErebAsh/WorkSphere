@@ -529,6 +529,11 @@ function AppPage() {
     uploadSpeed?: number;
     latency?: number;
     crowdLevel?: string;
+    petsAllowedIndoors?: boolean;
+    patioOnly?: boolean;
+    waterBowlsProvided?: boolean;
+    dogFriendly?: boolean;
+    catsAllowed?: boolean;
   }) => {
     if (!ratingDialog.venue) return;
 

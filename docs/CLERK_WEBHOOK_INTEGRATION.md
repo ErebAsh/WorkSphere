@@ -32,11 +32,11 @@ Webhooks are what keep these two systems in sync. Every time Clerk creates, upda
 
 **Supported events:**
 
-| Event | Trigger | Database action |
-|---|---|---|
-| `user.created` | New Clerk account registered | `prisma.user.create(...)` |
+| Event          | Trigger                             | Database action           |
+| -------------- | ----------------------------------- | ------------------------- |
+| `user.created` | New Clerk account registered        | `prisma.user.create(...)` |
 | `user.updated` | User updates their profile in Clerk | `prisma.user.update(...)` |
-| `user.deleted` | Clerk account removed | `prisma.user.delete(...)` |
+| `user.deleted` | Clerk account removed               | `prisma.user.delete(...)` |
 
 ---
 
@@ -151,10 +151,10 @@ POST /api/webhook
 
 Clerk uses [Svix](https://www.svix.com/) to sign and deliver webhooks. Every request includes three headers that together form a verifiable HMAC-SHA256 signature:
 
-| Header | Description |
-|---|---|
-| `svix-id` | Unique identifier for this specific webhook delivery |
-| `svix-timestamp` | Unix epoch seconds when the event was sent |
+| Header           | Description                                                        |
+| ---------------- | ------------------------------------------------------------------ |
+| `svix-id`        | Unique identifier for this specific webhook delivery               |
+| `svix-timestamp` | Unix epoch seconds when the event was sent                         |
 | `svix-signature` | One or more comma-separated HMAC-SHA256 signatures (`v1,<base64>`) |
 
 ### Verification code
@@ -184,13 +184,13 @@ try {
 
 ### Svix error codes
 
-| Scenario | HTTP response | Log message |
-|---|---|---|
-| Missing `svix-*` headers | `400 Bad Request` | `"Error occured -- no svix headers"` |
-| Signature mismatch | `400 Bad Request` | `"Error verifying webhook: ..."` |
-| Timestamp too old (> 5 min) | `400 Bad Request` | `"Error verifying webhook: ..."` |
-| `WEBHOOK_SECRET` not set | Server error (throws) | `"Please add WEBHOOK_SECRET..."` |
-| Successful verification | Proceeds to event handling | — |
+| Scenario                    | HTTP response              | Log message                          |
+| --------------------------- | -------------------------- | ------------------------------------ |
+| Missing `svix-*` headers    | `400 Bad Request`          | `"Error occured -- no svix headers"` |
+| Signature mismatch          | `400 Bad Request`          | `"Error verifying webhook: ..."`     |
+| Timestamp too old (> 5 min) | `400 Bad Request`          | `"Error verifying webhook: ..."`     |
+| `WEBHOOK_SECRET` not set    | Server error (throws)      | `"Please add WEBHOOK_SECRET..."`     |
+| Successful verification     | Proceeds to event handling | —                                    |
 
 ---
 
@@ -274,11 +274,11 @@ const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
 await prisma.user.create({
   data: {
-    id,                                        // Clerk user ID becomes the primary key
-    email: email_addresses[0]?.email_address,  // First (primary) email address
+    id, // Clerk user ID becomes the primary key
+    email: email_addresses[0]?.email_address, // First (primary) email address
     firstName: first_name,
     lastName: last_name,
-    imageUrl,                                  // Normalized URL (see section below)
+    imageUrl, // Normalized URL (see section below)
   },
 });
 ```
@@ -309,13 +309,13 @@ The `!` non-null assertion is safe here because Clerk always includes the user I
 
 ### Field mapping table
 
-| Clerk payload field | Prisma `User` field | Notes |
-|---|---|---|
-| `data.id` | `id` | Direct mapping; used as the primary key |
-| `data.email_addresses[0].email_address` | `email` | Only the first email is stored |
-| `data.first_name` | `firstName` | May be `null` for social-login accounts |
-| `data.last_name` | `lastName` | May be `null` for social-login accounts |
-| `data.image_url` (normalized) | `imageUrl` | See image normalization section |
+| Clerk payload field                     | Prisma `User` field | Notes                                   |
+| --------------------------------------- | ------------------- | --------------------------------------- |
+| `data.id`                               | `id`                | Direct mapping; used as the primary key |
+| `data.email_addresses[0].email_address` | `email`             | Only the first email is stored          |
+| `data.first_name`                       | `firstName`         | May be `null` for social-login accounts |
+| `data.last_name`                        | `lastName`          | May be `null` for social-login accounts |
+| `data.image_url` (normalized)           | `imageUrl`          | See image normalization section         |
 
 ---
 
@@ -324,25 +324,26 @@ The `!` non-null assertion is safe here because Clerk always includes the user I
 Clerk image URLs often include size parameters. The handler normalizes them to 150px and provides a fallback avatar when no image is available:
 
 ```ts
-const initials = `${first_name?.[0] || ""}${last_name?.[0] || ""}`.toUpperCase();
+const initials =
+  `${first_name?.[0] || ""}${last_name?.[0] || ""}`.toUpperCase();
 const fallbackUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-  initials || "WS"
+  initials || "WS",
 )}&background=6366f1&color=fff`;
 
 const imageUrl = image_url
   ? image_url
-      .replace(/(\?|&)sz=\d+/, "$1sz=150")      // normalize ?sz= parameter
+      .replace(/(\?|&)sz=\d+/, "$1sz=150") // normalize ?sz= parameter
       .replace(/(\?|&)width=\d+/, "$1width=150") // normalize ?width= parameter
   : fallbackUrl;
 ```
 
 **Behavior summary:**
 
-| Condition | Result |
-|---|---|
-| `image_url` is present | Resized to 150px via query parameter replacement |
+| Condition                                            | Result                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------ |
+| `image_url` is present                               | Resized to 150px via query parameter replacement                   |
 | `image_url` is `null` or empty and name is available | Initials-based avatar from `ui-avatars.com` with indigo background |
-| No name and no image | Falls back to `"WS"` initials on the same avatar service |
+| No name and no image                                 | Falls back to `"WS"` initials on the same avatar service           |
 
 This normalization runs identically for both `user.created` and `user.updated` events.
 
@@ -379,7 +380,7 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
-  "/api/webhook(.*)",   // ← webhook must be reachable without a session cookie
+  "/api/webhook(.*)", // ← webhook must be reachable without a session cookie
   "/privacy(.*)",
   "/terms(.*)",
 ]);
@@ -410,15 +411,18 @@ DATABASE_URL=postgresql://...
 ### Deployment considerations
 
 **Vercel**
+
 - Add `WEBHOOK_SECRET` via the Vercel project dashboard under **Settings → Environment Variables**.
 - Ensure the variable is scoped to the Production environment (and Preview if you want webhook testing on preview deployments).
 - Vercel serverless functions are stateless; the handler is safe as-is.
 
 **Docker / self-hosted**
+
 - Inject `WEBHOOK_SECRET` via environment variables in your container runtime or secrets manager.
 - Ensure the `/api/webhook` path is reachable from the public internet (not behind a VPN or firewall).
 
 **Rate limiting**
+
 - The webhook route does not have rate limiting applied. Clerk controls delivery frequency; no additional throttling is needed here.
 
 ### Monitoring recommendations
@@ -500,6 +504,7 @@ Open Prisma Studio at `http://localhost:5555`, navigate to the `User` table, and
 3. The `svix-timestamp` is more than 5 minutes old (replay protection triggered).
 
 **Fix:**
+
 - Copy the signing secret from the Clerk Dashboard again and replace `WEBHOOK_SECRET` in your environment.
 - Restart the server after updating the variable.
 - Confirm no middleware is transforming the request body before it reaches the route handler.
@@ -519,6 +524,7 @@ Open Prisma Studio at `http://localhost:5555`, navigate to the `User` table, and
 **Cause:** The database operation failed silently (the handler caught the error and returned `200`).
 
 **Fix:**
+
 1. Check server logs for `"Error creating user:"` followed by a Prisma error message.
 2. Common Prisma errors in this context:
    - `Unique constraint failed on the fields: (email)` — a user with that email already exists. This can happen if `ensureUserExists()` in `src/lib/auth.ts` created the row first.
@@ -552,12 +558,12 @@ Open Prisma Studio at `http://localhost:5555`, navigate to the `User` table, and
 
 ## Related Files
 
-| File | Purpose |
-|---|---|
-| `src/app/api/webhook/route.ts` | Webhook handler — Svix verification and database sync |
-| `src/middleware.ts` | Lists `/api/webhook` as a public route bypassing session auth |
-| `src/lib/auth.ts` | `ensureUserExists()` fallback for cases where the webhook hasn't fired yet |
-| `prisma/schema.prisma` | `User` model definition |
-| `docs/CLERK_JWT_VALIDATION.md` | Session-based authentication flow (separate from webhooks) |
-| `docs/CLERK_AUTH_SESSION.md` | Clerk session lifecycle and middleware routing |
-| `docs/ENV_VARS.md` | Full environment variable reference including `WEBHOOK_SECRET` |
+| File                           | Purpose                                                                    |
+| ------------------------------ | -------------------------------------------------------------------------- |
+| `src/app/api/webhook/route.ts` | Webhook handler — Svix verification and database sync                      |
+| `src/middleware.ts`            | Lists `/api/webhook` as a public route bypassing session auth              |
+| `src/lib/auth.ts`              | `ensureUserExists()` fallback for cases where the webhook hasn't fired yet |
+| `prisma/schema.prisma`         | `User` model definition                                                    |
+| `docs/CLERK_JWT_VALIDATION.md` | Session-based authentication flow (separate from webhooks)                 |
+| `docs/CLERK_AUTH_SESSION.md`   | Clerk session lifecycle and middleware routing                             |
+| `docs/ENV_VARS.md`             | Full environment variable reference including `WEBHOOK_SECRET`             |

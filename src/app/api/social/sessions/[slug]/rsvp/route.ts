@@ -1,6 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { eventBus } from "@/core/events";
+import "@/core/subscribers/discord";
 
 const allowed = new Set(["GOING", "MAYBE", "DECLINED"]);
 
@@ -78,6 +80,13 @@ export async function POST(
       },
     });
 
+    await eventBus.emit("session:rsvp", {
+      sessionId: session.id,
+      rsvpId: rsvp.id,
+      userId,
+      status: rsvp.status,
+    });
+
     return NextResponse.json(rsvp);
   } catch (error: any) {
     // Handle concurrent insert collisions by falling back to update
@@ -91,6 +100,14 @@ export async function POST(
         },
         data: { status: status as "GOING" | "MAYBE" | "DECLINED" },
       });
+
+      await eventBus.emit("session:rsvp", {
+        sessionId: session.id,
+        rsvpId: rsvp.id,
+        userId,
+        status: rsvp.status,
+      });
+
       return NextResponse.json(rsvp);
     }
     throw error;

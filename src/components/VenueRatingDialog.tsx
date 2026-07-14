@@ -33,6 +33,11 @@ interface VenueRatingDialogProps {
     hasQuietZone?: boolean;
     musicStyle?: string;
     outletLocations?: string[];
+    petsAllowedIndoors?: boolean;
+    patioOnly?: boolean;
+    waterBowlsProvided?: boolean;
+    dogFriendly?: boolean;
+    catsAllowed?: boolean;
   }) => void;
 }
 
@@ -72,6 +77,11 @@ export function VenueRatingDialog({
   const [lighting, setLighting] = useState<
     "natural_daylight" | "warm_ambient" | "fluorescent" | "bright_white" | ""
   >("");
+  const [petsAllowedIndoors, setPetsAllowedIndoors] = useState(false);
+  const [patioOnly, setPatioOnly] = useState(false);
+  const [waterBowlsProvided, setWaterBowlsProvided] = useState(false);
+  const [dogFriendly, setDogFriendly] = useState(false);
+  const [catsAllowed, setCatsAllowed] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -177,6 +187,11 @@ export function VenueRatingDialog({
         hasQuietZone,
         musicStyle: musicStyle || undefined,
         outletLocations: hasOutlets ? outletLocations : [],
+        petsAllowedIndoors,
+        patioOnly,
+        waterBowlsProvided,
+        dogFriendly,
+        catsAllowed,
       });
 
       setWifiQuality(3);
@@ -199,6 +214,11 @@ export function VenueRatingDialog({
       setHasQuietZone(false);
       setLighting("");
       setMusicStyle("");
+      setPetsAllowedIndoors(false);
+      setPatioOnly(false);
+      setWaterBowlsProvided(false);
+      setDogFriendly(false);
+      setCatsAllowed(false);
       onClose();
     } catch (error) {
       console.error("Error submitting rating:", error);
@@ -591,7 +611,10 @@ export function VenueRatingDialog({
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: "Lo-Fi / Chill Beats", value: "lofi" },
-                { label: "Classical / Jazz Background", value: "classical_jazz" },
+                {
+                  label: "Classical / Jazz Background",
+                  value: "classical_jazz",
+                },
                 { label: "No Music Played", value: "no_music" },
                 { label: "Not Specified / Other", value: "" },
               ].map((option) => (
@@ -649,6 +672,56 @@ export function VenueRatingDialog({
               className="h-4 w-4 rounded"
             />
             Strict Silence / Quiet Zones?
+          </label>
+
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={petsAllowedIndoors}
+              onChange={(event) => setPetsAllowedIndoors(event.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+            🐶 Pets Allowed Indoors?
+          </label>
+
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={patioOnly}
+              onChange={(event) => setPatioOnly(event.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+            🌿 Patio Only (Pets allowed outdoors only)?
+          </label>
+
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={waterBowlsProvided}
+              onChange={(event) => setWaterBowlsProvided(event.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+            💧 Water Bowls Provided for Pets?
+          </label>
+
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={dogFriendly}
+              onChange={(event) => setDogFriendly(event.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+            🦮 Dog-Friendly?
+          </label>
+
+          <label className="flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={catsAllowed}
+              onChange={(event) => setCatsAllowed(event.target.checked)}
+              className="h-4 w-4 rounded"
+            />
+            🐈 Cats Allowed?
           </label>
 
           <section>

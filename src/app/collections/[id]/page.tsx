@@ -12,28 +12,6 @@ import {
   Globe,
   FileDown,
 } from "lucide-react";
-import { useUser as useClerkUser } from "@clerk/nextjs";
-
-const useUser = () => {
-  const clerkUser = useClerkUser();
-  const isDummy =
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ===
-    "pk_test_ZXhhbXBsZS5hY2NvdW50cy5kZXYk";
-
-  if (isDummy) {
-    return {
-      isLoaded: true,
-      isSignedIn: true,
-      user: {
-        id: "user_mock",
-        firstName: "Nomad",
-        lastName: "Scout",
-        emailAddresses: [{ emailAddress: "nomad.scout@worksphere.dev" }],
-      },
-    };
-  }
-  return clerkUser || { isLoaded: false, isSignedIn: false, user: null };
-};
 
 import usePartySocket from "partysocket/react";
 import Image from "next/image";
@@ -46,7 +24,6 @@ export default function FolderDetailsPage({
 }) {
   const resolvedParams = use(params);
   const { id } = resolvedParams;
-  const { user: _user } = useUser();
   const [folder, setFolder] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

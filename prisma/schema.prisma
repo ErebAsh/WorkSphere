@@ -63,6 +63,8 @@ model Venue {
   petsAllowedIndoors Boolean             @default(false)
   patioOnly          Boolean             @default(false)
   waterBowlsProvided Boolean             @default(false)
+  dogFriendly        Boolean             @default(false)
+  catsAllowed        Boolean             @default(false)
   outletDensity      String? // every_table, some_tables, wall_seats, none
   powerTypes         String[]            @default([])
   outletLocations    String[]            @default([])
@@ -121,6 +123,11 @@ model VenueRating {
   peakDecibels      Float?
   lighting          String?
   musicStyle        String?
+  petsAllowedIndoors Boolean  @default(false)
+  patioOnly          Boolean  @default(false)
+  waterBowlsProvided Boolean  @default(false)
+  dogFriendly        Boolean  @default(false)
+  catsAllowed        Boolean  @default(false)
 
   @@unique([userId, venueId])
   @@index([venueId])

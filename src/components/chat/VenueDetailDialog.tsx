@@ -146,6 +146,13 @@ export function VenueDetailDialog({
       hidden: false,
       userVote: null,
     },
+    petsAllowedIndoors: {
+      confidenceScore: 100,
+      upvotes: 0,
+      downvotes: 0,
+      hidden: false,
+      userVote: null,
+    },
   });
 
   // Tab and dynamic content states
@@ -168,7 +175,8 @@ export function VenueDetailDialog({
       | "freeStreetParking"
       | "paidGarage"
       | "bicycleRack"
-      | "secureMotorcycleParking",
+      | "secureMotorcycleParking"
+      | "petsAllowedIndoors",
     isUpvote: boolean,
   ) => {
     if (!venue) return;
@@ -306,6 +314,13 @@ export function VenueDetailDialog({
               userVote: null,
             },
             secureMotorcycleParking: {
+              confidenceScore: 100,
+              upvotes: 0,
+              downvotes: 0,
+              hidden: false,
+              userVote: null,
+            },
+            petsAllowedIndoors: {
               confidenceScore: 100,
               upvotes: 0,
               downvotes: 0,
@@ -983,11 +998,17 @@ export function VenueDetailDialog({
                         <span>📞 Soundproof Booths Available</span>
                       </div>
                     )}
-                    {venue.outletLocations && venue.outletLocations.length > 0 && (
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold">
-                        <span>🔌 Outlets: {venue.outletLocations.map(l => l.replace('_', ' ')).join(', ')}</span>
-                      </div>
-                    )}
+                    {venue.outletLocations &&
+                      venue.outletLocations.length > 0 && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 text-xs font-semibold">
+                          <span>
+                            🔌 Outlets:{" "}
+                            {venue.outletLocations
+                              .map((l) => l.replace("_", " "))
+                              .join(", ")}
+                          </span>
+                        </div>
+                      )}
                   </div>
                 </div>
               </div>
@@ -1234,14 +1255,18 @@ export function VenueDetailDialog({
                           <span>
                             {t("venue.noise")}: {review.noiseLevel}
                           </span>
-                          {review.outletLocations && review.outletLocations.length > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>
-                                Locations: {review.outletLocations.map((l: string) => l.replace('_', ' ')).join(', ')}
-                              </span>
-                            </>
-                          )}
+                          {review.outletLocations &&
+                            review.outletLocations.length > 0 && (
+                              <>
+                                <span>•</span>
+                                <span>
+                                  Locations:{" "}
+                                  {review.outletLocations
+                                    .map((l: string) => l.replace("_", " "))
+                                    .join(", ")}
+                                </span>
+                              </>
+                            )}
                         </div>
                       </div>
                       {review.wifiSpeed && (

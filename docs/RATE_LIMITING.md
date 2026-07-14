@@ -3,6 +3,7 @@
 This guide explains how rate limiting is implemented in WorkSphere to protect application endpoints from abuse, denial-of-service (DoS) attacks, brute-force requests, and third-party API budget exhaustion.
 
 It covers:
+
 - Setting up Upstash Redis for distributed rate limiting
 - Understanding the rate limiter's request flow and in-memory fallback
 - Route-specific rate limits (e.g., chat and authentication APIs)
@@ -16,18 +17,22 @@ It covers:
 WorkSphere uses **Upstash Redis** as its primary distributed cache store for rate limiting because it provides a serverless REST-based client. This avoids persistent TCP socket connections, making it compatible with serverless runtimes.
 
 ### Creating an Upstash Redis Database
+
 1. Sign up or log in to the **[Upstash Console](https://console.upstash.com/)**.
 2. Click **Create Database**.
 3. Choose a database name (e.g., `worksphere-redis`) and select your preferred cloud provider and region.
 4. Click **Create** to provision the database.
 
 ### Obtaining REST Credentials
+
 Once the database is created, scroll down to the **REST API** section in your database dashboard.
 Copy the following two credential strings:
+
 - **UPSTASH_REDIS_REST_URL**: The HTTPS REST endpoint URL.
 - **UPSTASH_REDIS_REST_TOKEN**: The authentication token.
 
 ### Required Environment Variables
+
 Add these credentials to your `.env.local` file (or your hosting provider's secret management dashboard in production):
 
 ```env
@@ -37,6 +42,7 @@ UPSTASH_REDIS_REST_TOKEN="your_upstash_rest_token_here"
 ```
 
 ### Connecting the Application
+
 The rate-limiting utility is implemented in [rateLimit.ts](file:///c:/Users/HP/Downloads/WorkSphere-main%20%281%29/WorkSphere-main/src/lib/rateLimit.ts). The client connection is established dynamically when environment variables are present:
 
 1. **Lazy Initialization**: It imports `@upstash/ratelimit` and `@upstash/redis` dynamically at runtime. This prevents build-time compilation errors when Redis credentials are not configured.
@@ -48,6 +54,7 @@ The rate-limiting utility is implemented in [rateLimit.ts](file:///c:/Users/HP/D
 ## 2. API Rate Limiting
 
 ### Request Flow & Enforcement Logic
+
 When a request hits a protected API endpoint, the system follows this workflow:
 
 ```mermaid
@@ -73,15 +80,16 @@ graph TD
 3. **Evaluation**: The helper `rateLimit(identifier, limit)` evaluates the request count against the threshold. If it exceeds the limit, an HTTP 429 response is returned immediately, skipping execution of database queries, LLM API calls, or email dispatch.
 
 ### Supported Route Limits
+
 Below is the complete list of rate-limited routes implemented in the codebase:
 
-| Endpoint | Method | Default Limit | Purpose |
-| :--- | :---: | :---: | :--- |
-| `POST /api/chat` | `POST` | **20 req / min** | Protects the Groq LLM API from query abuse and token credit exhaustion. |
-| `POST /api/auth/forgot-password` | `POST` | **3 req / min** | Prevents email spam, account enumeration, and dictionary attacks. |
-| `POST /api/auth/resend-otp` | `POST` | **3 req / min** | Limits outbound OTP codes to protect SMS/email carrier budgets. |
-| `POST /api/auth/reset-password` | `POST` | **5 req / min** | Prevents brute-forcing user credentials during password recovery. |
-| `POST /api/auth/verify-otp` | `POST` | **5 req / min** | Prevents credential-stuffing and guess attacks against OTP codes. |
+| Endpoint                         | Method |  Default Limit   | Purpose                                                                 |
+| :------------------------------- | :----: | :--------------: | :---------------------------------------------------------------------- |
+| `POST /api/chat`                 | `POST` | **20 req / min** | Protects the Groq LLM API from query abuse and token credit exhaustion. |
+| `POST /api/auth/forgot-password` | `POST` | **3 req / min**  | Prevents email spam, account enumeration, and dictionary attacks.       |
+| `POST /api/auth/resend-otp`      | `POST` | **3 req / min**  | Limits outbound OTP codes to protect SMS/email carrier budgets.         |
+| `POST /api/auth/reset-password`  | `POST` | **5 req / min**  | Prevents brute-forcing user credentials during password recovery.       |
+| `POST /api/auth/verify-otp`      | `POST` | **5 req / min**  | Prevents credential-stuffing and guess attacks against OTP codes.       |
 
 > [!IMPORTANT]
 > **Venue Search Route Limits**
@@ -92,7 +100,9 @@ Below is the complete list of rate-limited routes implemented in the codebase:
 ## 3. Fallback & Response Handling
 
 ### Behavior When Limits Are Exceeded
+
 When a client exceeds the request limit, the API halts request execution and responds with:
+
 - **HTTP Status**: `429 Too Many Requests`
 - **Response Headers**:
   - `Retry-After`: The number of seconds the client must wait before their quota resets.
@@ -101,6 +111,7 @@ When a client exceeds the request limit, the API halts request execution and res
 - **JSON Payload**: Contains a descriptive error and the retry wait time in seconds.
 
 #### Example Chat Route Response (`POST /api/chat`):
+
 ```json
 {
   "error": "Rate limit exceeded. Please wait before sending more messages.",
@@ -109,6 +120,7 @@ When a client exceeds the request limit, the API halts request execution and res
 ```
 
 #### Example Auth Route Response (`POST /api/auth/forgot-password`):
+
 ```json
 {
   "error": "Too many password reset requests. Please wait before trying again.",
@@ -121,6 +133,7 @@ When a client exceeds the request limit, the API halts request execution and res
 ## 4. Best Practices
 
 ### Modifying Rate-Limit Values
+
 To adjust the rate limits for an existing route, open the corresponding route file and update the limit parameter passed to `rateLimit(identifier, limit)`.
 
 For instance, to increase the chat rate limit from `20` to `30` in `src/app/api/chat/route.ts`:
@@ -138,6 +151,7 @@ Make sure to update the matching limit parameter in the accompanying metadata fu
 ```
 
 ### Securing the Venue Search Route
+
 To introduce rate limiting to the `GET /api/venues` route, modify `src/app/api/venues/route.ts` as follows:
 
 ```typescript
@@ -154,12 +168,15 @@ export async function GET(req: NextRequest) {
 
   if (!allowed) {
     const info = getRateLimitInfo(identifier, 60);
-    const retryAfter = info?.resetTime 
-      ? Math.ceil((info.resetTime - Date.now()) / 1000) 
+    const retryAfter = info?.resetTime
+      ? Math.ceil((info.resetTime - Date.now()) / 1000)
       : 60;
 
     return NextResponse.json(
-      { error: "Too many venue search requests. Please try again later.", retryAfter },
+      {
+        error: "Too many venue search requests. Please try again later.",
+        retryAfter,
+      },
       {
         status: 429,
         headers: {
@@ -167,7 +184,7 @@ export async function GET(req: NextRequest) {
           "X-RateLimit-Limit": "60",
           "X-RateLimit-Remaining": "0",
         },
-      }
+      },
     );
   }
 
