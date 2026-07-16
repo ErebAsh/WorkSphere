@@ -18,6 +18,8 @@ import {
   Volume2,
   Wifi,
   Zap,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { RefObject, useState, useEffect } from "react";
 import { BrainTerminal } from "./BrainTerminal";
@@ -98,6 +100,7 @@ interface VenueChatCardProps {
   onRate: (venue: Venue) => void;
   onOpenDetails: (venue: Venue) => void;
   onBook: (venue: Venue) => void;
+  viewMode?: "card" | "list";
 }
 
 export function VenueChatCard({
@@ -108,6 +111,7 @@ export function VenueChatCard({
   onRate,
   onOpenDetails,
   onBook,
+  viewMode = "card",
 }: VenueChatCardProps) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -167,6 +171,117 @@ export function VenueChatCard({
 
   const displayPhoto =
     photoUrl || venueFallbacks[venue.category] || venueFallbacks.default;
+
+  if (viewMode === "list") {
+    return (
+      <>
+        <div
+          onClick={() => onOpenDetails(venue)}
+          className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-white dark:bg-zinc-900 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer shadow-sm my-1 active:scale-[0.99] flex items-center gap-3"
+        >
+          {/* Photo thumbnail */}
+          {photoLoading ? (
+            <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-lg shrink-0" />
+          ) : (
+            <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={displayPhoto}
+                alt={venue.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = venueFallbacks.default;
+                }}
+              />
+            </div>
+          )}
+
+          {/* Content Area */}
+          <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <CategoryIcon className={`w-3.5 h-3.5 ${iconColor} shrink-0`} />
+                <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-50 truncate uppercase tracking-tight">
+                  {venue.name}
+                </h4>
+                {venue.score != null && (
+                  <span className="text-[10px] font-black text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-1 py-0.5 rounded">
+                    {Math.round(venue.score * 10)}%
+                  </span>
+                )}
+              </div>
+              {venue.address && (
+                <p className="text-[10px] text-zinc-500 font-medium truncate">
+                  {venue.address}
+                </p>
+              )}
+            </div>
+
+            {/* Details (wifi, outlets) horizontally */}
+            <div className="flex items-center gap-2 shrink-0">
+              {venue.wifi && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/20">
+                  <Wifi className="w-3 h-3 text-green-600" />
+                  <span className="text-[9px] font-bold text-green-600 uppercase">
+                    WiFi
+                  </span>
+                </div>
+              )}
+              {venue.hasOutlets && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-500/10 border border-yellow-500/20">
+                  <Zap className="w-3 h-3 text-yellow-600" />
+                  <span className="text-[9px] font-bold text-yellow-600 uppercase">
+                    Power
+                  </span>
+                </div>
+              )}
+              {venue.noiseLevel === "quiet" && (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-500/10 border border-blue-500/20">
+                  <Volume2 className="w-3 h-3 text-blue-600" />
+                  <span className="text-[9px] font-bold text-blue-600 uppercase">
+                    Quiet
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mini Actions to keep functionality */}
+          <div
+            className="flex items-center gap-1.5 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => onBook(venue)}
+              className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all active:scale-[0.95]"
+              title="Book Now"
+            >
+              <Zap className="w-3.5 h-3.5 fill-current" />
+            </button>
+            <button
+              onClick={() => onToggleFavorite(venue)}
+              className={`p-1.5 rounded-lg border transition-all active:scale-[0.95] ${
+                isFavorited
+                  ? "bg-red-500 text-white border-red-500"
+                  : "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-200"
+              }`}
+              title="Save favorite"
+            >
+              <Heart
+                className={`w-3.5 h-3.5 ${isFavorited ? "fill-current" : ""}`}
+              />
+            </button>
+          </div>
+        </div>
+        {showFolderModal && venue && (
+          <AddToFolderModal
+            venue={venue}
+            onClose={() => setShowFolderModal(false)}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <>
@@ -360,6 +475,82 @@ export function VenueChatCard({
   );
 }
 
+// ─── VenueListings ─────────────────────────────────────────────────────────────
+
+interface VenueListingsProps {
+  venues: Venue[];
+  favorites: Set<string>;
+  onGetDirections: (venue: Venue) => void;
+  onToggleFavorite: (venue: Venue) => void;
+  onRateVenue: (venue: Venue) => void;
+  onOpenDetails: (venue: Venue) => void;
+  onBook: (venue: Venue) => void;
+}
+
+export function VenueListings({
+  venues,
+  favorites,
+  onGetDirections,
+  onToggleFavorite,
+  onRateVenue,
+  onOpenDetails,
+  onBook,
+}: VenueListingsProps) {
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
+
+  return (
+    <div className="space-y-3 pl-2">
+      <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-1">
+        <p className="text-[10px] uppercase font-black tracking-widest text-zinc-400">
+          Recommended Venues ({venues.length})
+        </p>
+        <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 p-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-inner">
+          <button
+            onClick={() => setViewMode("card")}
+            className={`p-1 rounded-md transition-all active:scale-90 ${
+              viewMode === "card"
+                ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-600"
+            }`}
+            title="Card View"
+            aria-label="View as rich cards"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-1 rounded-md transition-all active:scale-90 ${
+              viewMode === "list"
+                ? "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 shadow-sm"
+                : "text-zinc-400 hover:text-zinc-600"
+            }`}
+            title="List View"
+            aria-label="View as compact list"
+          >
+            <List className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      <div className={viewMode === "card" ? "space-y-3" : "space-y-2"}>
+        {venues.slice(0, 5).map((venue) => (
+          <VenueChatCard
+            key={venue.id}
+            venue={venue}
+            isFavorited={favorites.has(venue.id)}
+            onGetDirections={onGetDirections}
+            onToggleFavorite={onToggleFavorite}
+            onRate={onRateVenue}
+            onOpenDetails={onOpenDetails}
+            onBook={onBook}
+            viewMode={viewMode}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── MessageList ──────────────────────────────────────────────────────────────
 
 interface MessageListProps {
@@ -524,23 +715,15 @@ export function MessageList({
           )}
 
           {message.venues && message.venues.length > 0 && (
-            <div className="space-y-3 pl-2">
-              <p className="text-[10px] uppercase font-black tracking-widest text-zinc-400">
-                Recommended Venues ({message.venues.length})
-              </p>
-              {message.venues.slice(0, 5).map((venue) => (
-                <VenueChatCard
-                  key={venue.id}
-                  venue={venue}
-                  isFavorited={favorites.has(venue.id)}
-                  onGetDirections={onGetDirections}
-                  onToggleFavorite={onToggleFavorite}
-                  onRate={(v) => onRateVenue(v)}
-                  onOpenDetails={onOpenDetails}
-                  onBook={onBook}
-                />
-              ))}
-            </div>
+            <VenueListings
+              venues={message.venues}
+              favorites={favorites}
+              onGetDirections={onGetDirections}
+              onToggleFavorite={onToggleFavorite}
+              onRateVenue={onRateVenue}
+              onOpenDetails={onOpenDetails}
+              onBook={onBook}
+            />
           )}
         </div>
       ))}
