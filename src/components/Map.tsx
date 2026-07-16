@@ -9,6 +9,7 @@ import {
   Popup,
   Polyline,
   useMap,
+  LayersControl,
 } from "react-leaflet";
 
 import L from "leaflet";
@@ -133,7 +134,8 @@ function ZoomWatcher({
   return null;
 }
 
-// Subcomponent to handle rendering the Leaflet heatmap layer seamlessly
+import { createLayerComponent } from "@react-leaflet/core";
+
 const CROWD_GRADIENT = {
   0.3: "#1e3a8a", // Deep Blue (Quiet)
   0.55: "#3b82f6", // Bright Blue (Moderate)
@@ -141,38 +143,26 @@ const CROWD_GRADIENT = {
   1.0: "#d946ef", // Neon Pink/Fuchsia (High Activity levels)
 };
 
-function HeatmapOverlay({
-  points,
-  visible,
-  gradient = CROWD_GRADIENT,
-}: {
-  points: any[];
-  visible: boolean;
-  gradient?: Record<number, string>;
-}) {
-  const map = useMap();
+const createHeatLayer = (props: any, context: any) => {
+  const layer = (L as any).heatLayer(props.points, {
+    radius: 30,
+    blur: 18,
+    maxZoom: 16,
+    gradient: props.gradient || CROWD_GRADIENT,
+  });
+  return { instance: layer, context };
+};
 
-  useEffect(() => {
-    if (!map || !visible || points.length === 0) return;
+const updateHeatLayer = (instance: any, props: any, prevProps: any) => {
+  if (props.points !== prevProps.points) {
+    instance.setLatLngs(props.points);
+  }
+  if (props.gradient !== prevProps.gradient) {
+    instance.setOptions({ gradient: props.gradient || CROWD_GRADIENT });
+  }
+};
 
-    const heatLayer = (L as any).heatLayer(points, {
-      radius: 30,
-      blur: 18,
-      maxZoom: 16,
-      gradient: gradient,
-    });
-
-    heatLayer.addTo(map);
-
-    return () => {
-      if (map && heatLayer) {
-        map.removeLayer(heatLayer);
-      }
-    };
-  }, [map, points, visible, gradient]);
-
-  return null;
-}
+const HeatmapOverlay = createLayerComponent(createHeatLayer, updateHeatLayer);
 function ResizeWatcher({ delay = 150 }: { delay?: number }) {
   const map = useMap();
 
@@ -284,11 +274,9 @@ const Map = ({
   };
 
   // Track heatmap states
-  const [showHeatmap, setShowHeatmap] = useState<boolean>(false);
   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
 
   // Noise-level heatmap states (Issue #135)
-  const [showNoiseHeatmap, setShowNoiseHeatmap] = useState<boolean>(false);
   const [noiseHeatmapPoints, setNoiseHeatmapPoints] = useState<any[]>([]);
 
   // Green (<45dB) -> Yellow (45-65dB) -> Red (>65dB), banded rather than
@@ -304,34 +292,28 @@ const Map = ({
 
   // Async load data context when layer UI toggles active
   useEffect(() => {
-    if (showHeatmap) {
-      fetch("/api/map/heatmap")
-        .then((res) => res.json())
-        .then((resData) => {
-          if (resData.success) {
-            setHeatmapPoints(resData.data);
-          }
-        })
-        .catch((err) =>
-          console.error("Could not populate heatmap context", err),
-        );
-    }
-  }, [showHeatmap]);
+    fetch("/api/map/heatmap")
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData.success) {
+          setHeatmapPoints(resData.data);
+        }
+      })
+      .catch((err) => console.error("Could not populate heatmap context", err));
+  }, []);
 
   useEffect(() => {
-    if (showNoiseHeatmap) {
-      fetch("/api/map/noise-heatmap")
-        .then((res) => res.json())
-        .then((resData) => {
-          if (resData.success) {
-            setNoiseHeatmapPoints(resData.data);
-          }
-        })
-        .catch((err) =>
-          console.error("Could not populate noise heatmap context", err),
-        );
-    }
-  }, [showNoiseHeatmap]);
+    fetch("/api/map/noise-heatmap")
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData.success) {
+          setNoiseHeatmapPoints(resData.data);
+        }
+      })
+      .catch((err) =>
+        console.error("Could not populate noise heatmap context", err),
+      );
+  }, []);
 
   // Group and spiderfy overlapping markers
   const spiderfiedMarkers = useMemo(() => {
@@ -578,49 +560,27 @@ const Map = ({
           position: "relative",
         }}
       >
-        <div className="map-heatmap-toggle">
-          <button
-            type="button"
-            onClick={() => {
-              setShowHeatmap(!showHeatmap);
-              if (!showHeatmap) setShowNoiseHeatmap(false);
-            }}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg shadow-md border transition-all duration-200 ${
-              showHeatmap
-                ? "bg-purple-600 text-white border-purple-500 hover:bg-purple-700"
-                : "bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800"
-            }`}
-          >
-            {showHeatmap
-              ? "📍 Show Venue Markers"
-              : "🔥 Show Live Crowd Heatmap"}
-          </button>
-        </div>
+        <LayersControl position="topright">
+          <LayersControl.BaseLayer checked name="OpenStreetMap">
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+              className="map-tiles-dark"
+            />
+          </LayersControl.BaseLayer>
 
-        <div className="map-noise-toggle">
-          <button
-            type="button"
-            onClick={() => {
-              setShowNoiseHeatmap(!showNoiseHeatmap);
-              if (!showNoiseHeatmap) setShowHeatmap(false);
-            }}
-            className={`px-4 py-2 text-xs font-semibold rounded-lg shadow-md border transition-all duration-200 ${
-              showNoiseHeatmap
-                ? "bg-green-600 text-white border-green-500 hover:bg-green-700"
-                : "bg-zinc-900 text-zinc-300 border-zinc-700 hover:bg-zinc-800"
-            }`}
-          >
-            {showNoiseHeatmap
-              ? "📍 Show Venue Markers"
-              : "🔊 Show Noise Levels"}
-          </button>
-        </div>
+          <LayersControl.Overlay name="Live Crowd Heatmap">
+            <HeatmapOverlay points={heatmapPoints} />
+          </LayersControl.Overlay>
 
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          className="map-tiles-dark"
-        />
+          <LayersControl.Overlay name="Noise Levels">
+            <HeatmapOverlay
+              points={noiseHeatmapPoints}
+              gradient={NOISE_GRADIENT}
+            />
+          </LayersControl.Overlay>
+        </LayersControl>
+
         <MapController mapView={mapView} />
         <AutoCenter markers={markers} userLocation={center} />
         <ZoomWatcher onZoomSettled={handleZoomSettled} />
@@ -631,59 +591,48 @@ const Map = ({
             <Popup>You are here!</Popup>
           </Marker>
         )}
-
-        {showHeatmap ? (
-          <HeatmapOverlay points={heatmapPoints} visible={showHeatmap} />
-        ) : showNoiseHeatmap ? (
-          <HeatmapOverlay
-            points={noiseHeatmapPoints}
-            visible={showNoiseHeatmap}
-            gradient={NOISE_GRADIENT}
-          />
-        ) : (
-          spiderfiedMarkers.map((marker) => (
-            <Marker
-              key={marker.id}
-              position={[marker.renderedLat, marker.renderedLng]}
-              icon={marker.id.includes("dest") ? destinationIcon : venueIcon}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <div className="font-semibold text-white">{marker.name}</div>
-                  {marker.category && (
-                    <div className="text-zinc-400">{marker.category}</div>
-                  )}
-                  {marker.address && (
-                    <div className="text-zinc-500 text-xs mt-1">
-                      {marker.address}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    // Prevent duplicates in queue chain matrix
-                    if (!routingQueue.some((v) => v.id === marker.id)) {
-                      const updated = [
-                        ...routingQueue,
-                        {
-                          id: marker.id,
-                          name: marker.name,
-                          latitude: Number(marker.position.lat),
-                          longitude: Number(marker.position.lng),
-                        },
-                      ];
-                      setRoutingQueue(updated);
-                      calculateOptimizedRoute(updated);
-                    }
-                  }}
-                  className="mt-2 w-full rounded bg-zinc-800 py-1 text-[10px] font-medium text-zinc-200 hover:bg-blue-600 hover:text-white transition-colors"
-                >
-                  ➕ Add to Workday Timeline
-                </button>
-              </Popup>
-            </Marker>
-          ))
-        )}
+        {spiderfiedMarkers.map((marker) => (
+          <Marker
+            key={marker.id}
+            position={[marker.renderedLat, marker.renderedLng]}
+            icon={marker.id.includes("dest") ? destinationIcon : venueIcon}
+          >
+            <Popup>
+              <div className="text-sm">
+                <div className="font-semibold text-white">{marker.name}</div>
+                {marker.category && (
+                  <div className="text-zinc-400">{marker.category}</div>
+                )}
+                {marker.address && (
+                  <div className="text-zinc-500 text-xs mt-1">
+                    {marker.address}
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  // Prevent duplicates in queue chain matrix
+                  if (!routingQueue.some((v) => v.id === marker.id)) {
+                    const updated = [
+                      ...routingQueue,
+                      {
+                        id: marker.id,
+                        name: marker.name,
+                        latitude: Number(marker.position.lat),
+                        longitude: Number(marker.position.lng),
+                      },
+                    ];
+                    setRoutingQueue(updated);
+                    calculateOptimizedRoute(updated);
+                  }
+                }}
+                className="mt-2 w-full rounded bg-zinc-800 py-1 text-[10px] font-medium text-zinc-200 hover:bg-blue-600 hover:text-white transition-colors"
+              >
+                ➕ Add to Workday Timeline
+              </button>
+            </Popup>
+          </Marker>
+        ))}
 
         {/* Render OSRM Optimized Multi-Stop Routing Layer Geometry */}
         {optimizedRoute &&
