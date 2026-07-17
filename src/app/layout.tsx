@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import I18nProvider from "../components/I18nProvider";
 import { ThemeProvider } from "../components/ThemeProvider";
+import { ScrollProgress } from "../components/ui/ScrollProgress";
 
 import { headers } from "next/headers";
 
@@ -118,6 +119,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <ScrollProgress />
         {bodyContent}
       </body>
     </html>
