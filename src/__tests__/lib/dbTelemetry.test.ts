@@ -140,14 +140,8 @@ describe("Database Telemetry", () => {
 
       const stats = await dbTelemetry.getDbLatencyStats();
 
-      expect(mockHgetall).toHaveBeenCalledWith(
-        "worksphere:telemetry:global",
-        expect.any(Object),
-      );
-      expect(mockSmembers).toHaveBeenCalledWith(
-        "worksphere:telemetry:models",
-        expect.any(Object),
-      );
+      expect(mockHgetall).toHaveBeenCalledWith("worksphere:telemetry:global");
+      expect(mockSmembers).toHaveBeenCalledWith("worksphere:telemetry:models");
       expect(mockLrange).toHaveBeenCalledWith(
         "worksphere:telemetry:samples:Product",
         0,

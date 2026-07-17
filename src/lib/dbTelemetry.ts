@@ -37,6 +37,23 @@ if (typeof window === "undefined") {
     });
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Timeout after ${timeoutMs}ms`));
+    }, timeoutMs);
+    promise
+      .then((val) => {
+        clearTimeout(timer);
+        resolve(val);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
 function getRedis(): Redis | null {
   if (cachedRedis) return cachedRedis;
 
@@ -94,11 +111,9 @@ export function recordQueryDuration(model: string, durationMs: number) {
     pipeline.lpush(samplesKey, JSON.stringify(sample));
     pipeline.ltrim(samplesKey, 0, MAX_SAMPLES_PER_MODEL - 1);
 
-    const promise = pipeline
-      .exec({ signal: AbortSignal.timeout(2000) })
-      .catch((error) => {
-        console.error("[dbTelemetry] Redis write failed:", error);
-      });
+    const promise = withTimeout(pipeline.exec(), 2000).catch((error) => {
+      console.error("[dbTelemetry] Redis write failed:", error);
+    });
 
     // Request lifecycle integration for Next.js 15+ serverless environments
     if (nextServerAfter) {
@@ -165,16 +180,12 @@ export async function getDbLatencyStats() {
       const globalKey = "worksphere:telemetry:global";
       const modelsKey = "worksphere:telemetry:models";
 
-      const timeoutSignal = AbortSignal.timeout(1500);
-
       const [globalStats, models] = await Promise.all([
-        redis.hgetall(globalKey, { signal: timeoutSignal }) as Promise<Record<
+        withTimeout(redis.hgetall(globalKey), 1500) as Promise<Record<
           string,
           string | number
         > | null>,
-        redis.smembers(modelsKey, { signal: timeoutSignal }) as Promise<
-          string[]
-        >,
+        withTimeout(redis.smembers(modelsKey), 1500) as Promise<string[]>,
       ]);
 
       const redisTotalQueryCount = globalStats
@@ -197,7 +208,7 @@ export async function getDbLatencyStats() {
         for (const model of models) {
           pipeline.lrange(`worksphere:telemetry:samples:${model}`, 0, -1);
         }
-        const samplesListsRaw = await pipeline.exec({ signal: timeoutSignal });
+        const samplesListsRaw = await withTimeout(pipeline.exec(), 1500);
 
         for (let i = 0; i < models.length; i++) {
           const model = models[i];
