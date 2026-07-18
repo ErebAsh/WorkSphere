@@ -34,6 +34,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  LineChart,
+  Line,
 } from "recharts";
 import { useTranslation } from "react-i18next";
 
@@ -168,6 +170,7 @@ export function VenueDetailDialog({
   const [uploadingMenu, setUploadingMenu] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const [wifiPredictions, setWifiPredictions] = useState<any[]>([]);
+  const [occupancyData, setOccupancyData] = useState<any[]>([]);
 
   const _submitAmenityVote = async (
     amenityKey:
@@ -441,6 +444,13 @@ export function VenueDetailDialog({
         .then((r) => r.json())
         .then((data) => {
           if (data.predictions) setWifiPredictions(data.predictions);
+        })
+        .catch((err) => console.error(err));
+
+      fetch(`/api/venues/${encodeURIComponent(venue.id)}/telemetry`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.occupancy) setOccupancyData(data.occupancy);
         })
         .catch((err) => console.error(err));
     } else if (activeTab === "reviews") {
@@ -887,6 +897,70 @@ export function VenueDetailDialog({
                           name="Latency"
                         />
                       </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {occupancyData.length > 0 && (
+                <div className="mb-6 bg-white dark:bg-zinc-800 p-5 rounded-2xl border border-zinc-100 dark:border-zinc-700 shadow-sm">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-zinc-800 dark:text-zinc-200 mb-1 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-orange-500" />
+                    Live Crowd Occupancy
+                  </h3>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-4">
+                    Historical crowd levels by hour
+                  </p>
+                  <div className="h-40 w-full mt-2">
+                    <ResponsiveContainer
+                      width="99%"
+                      height="100%"
+                      debounce={50}
+                    >
+                      <LineChart data={occupancyData}>
+                        <XAxis
+                          dataKey="time"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{ fontSize: 10, fill: "#888" }}
+                        />
+                        <YAxis
+                          tickFormatter={(value) => `${value}%`}
+                          tick={{ fontSize: 10, fill: "#888" }}
+                          width={40}
+                          domain={[0, 100]}
+                        />
+                        <Tooltip
+                          cursor={{
+                            stroke: "rgba(0,0,0,0.05)",
+                            strokeWidth: 2,
+                          }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2.5 rounded shadow-xl">
+                                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                                    {data.time}
+                                  </p>
+                                  <p className="text-sm font-bold text-orange-600">
+                                    {data.occupancy}% Occupied
+                                  </p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="occupancy"
+                          stroke="#f97316"
+                          strokeWidth={3}
+                          dot={{ fill: "#f97316", r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
