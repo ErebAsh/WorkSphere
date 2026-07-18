@@ -21,7 +21,7 @@ import {
   LayoutGrid,
   List,
 } from "lucide-react";
-import { RefObject, useState, useEffect } from "react";
+import { RefObject, useState, useEffect, useRef } from "react";
 import { BrainTerminal } from "./BrainTerminal";
 import { trackVenueInteraction } from "@/lib/analytics";
 import { MessageRenderer } from "./GenerativeUI";
@@ -101,6 +101,9 @@ interface VenueChatCardProps {
   onOpenDetails: (venue: Venue) => void;
   onBook: (venue: Venue) => void;
   viewMode?: "card" | "list";
+  tabIndex?: number;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  "data-index"?: number;
 }
 
 export function VenueChatCard({
@@ -112,6 +115,9 @@ export function VenueChatCard({
   onOpenDetails,
   onBook,
   viewMode = "card",
+  tabIndex,
+  onKeyDown,
+  "data-index": dataIndex,
 }: VenueChatCardProps) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [photoLoading, setPhotoLoading] = useState(false);
@@ -177,7 +183,10 @@ export function VenueChatCard({
       <>
         <div
           onClick={() => onOpenDetails(venue)}
-          className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-white dark:bg-zinc-900 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer shadow-sm my-1 active:scale-[0.99] flex items-center gap-3"
+          tabIndex={tabIndex}
+          onKeyDown={onKeyDown}
+          data-index={dataIndex}
+          className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-white dark:bg-zinc-900 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer shadow-sm my-1 active:scale-[0.99] flex items-center gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
         >
           {/* Photo thumbnail */}
           {photoLoading ? (
@@ -287,7 +296,10 @@ export function VenueChatCard({
     <>
       <div
         onClick={() => onOpenDetails(venue)}
-        className="border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer shadow-lg my-2 active:scale-95"
+        tabIndex={tabIndex}
+        onKeyDown={onKeyDown}
+        data-index={dataIndex}
+        className="border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden bg-white dark:bg-zinc-900 hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer shadow-lg my-2 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500"
       >
         {/* Venue photo */}
         {photoLoading ? (
@@ -497,9 +509,35 @@ export function VenueListings({
   onBook,
 }: VenueListingsProps) {
   const [viewMode, setViewMode] = useState<"card" | "list">("card");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    index: number,
+    venue: Venue,
+  ) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIndex = Math.min(index + 1, venues.length - 1);
+      const nextEl = containerRef.current?.querySelector(
+        `[data-index="${nextIndex}"]`,
+      ) as HTMLElement;
+      nextEl?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prevIndex = Math.max(index - 1, 0);
+      const prevEl = containerRef.current?.querySelector(
+        `[data-index="${prevIndex}"]`,
+      ) as HTMLElement;
+      prevEl?.focus();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      onOpenDetails(venue);
+    }
+  };
 
   return (
-    <div className="space-y-3 pl-2">
+    <div className="space-y-3 pl-2" ref={containerRef}>
       <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2 mb-1">
         <p className="text-[10px] uppercase font-black tracking-widest text-zinc-400">
           Recommended Venues ({venues.length})
@@ -533,7 +571,7 @@ export function VenueListings({
       </div>
 
       <div className={viewMode === "card" ? "space-y-3" : "space-y-2"}>
-        {venues.slice(0, 5).map((venue) => (
+        {venues.slice(0, 5).map((venue, index) => (
           <VenueChatCard
             key={venue.id}
             venue={venue}
@@ -544,6 +582,9 @@ export function VenueListings({
             onOpenDetails={onOpenDetails}
             onBook={onBook}
             viewMode={viewMode}
+            tabIndex={0}
+            data-index={index}
+            onKeyDown={(e) => handleKeyDown(e, index, venue)}
           />
         ))}
       </div>
