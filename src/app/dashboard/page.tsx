@@ -45,6 +45,7 @@ import Link from "next/link";
 import { MemoryManager } from "./MemoryManager";
 import { NotificationSettings } from "./NotificationSettings";
 import { CheckInHistory } from "./CheckInHistory";
+import { WorkStyleProfile } from "./WorkStyleProfile";
 
 interface AgentMetric {
   agent: string;
@@ -370,7 +371,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Settings & AI Memory Management */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          <WorkStyleProfile />
           <NotificationSettings />
           <MemoryManager />
         </div>
