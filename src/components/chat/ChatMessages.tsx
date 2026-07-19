@@ -20,6 +20,8 @@ import {
   Zap,
   LayoutGrid,
   List,
+  Copy,
+  Check,
 } from "lucide-react";
 import { RefObject, useState, useEffect, useRef } from "react";
 import { BrainTerminal } from "./BrainTerminal";
@@ -833,13 +835,18 @@ export function MessageList({
               className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[90%] rounded-2xl px-5 py-3 shadow-md border-2 ${
+                className={`group relative max-w-[90%] rounded-2xl px-5 py-3 shadow-md border-2 ${
                   message.role === "user"
                     ? "bg-zinc-950 border-zinc-800 text-white rounded-tr-none"
                     : "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 border-zinc-100 dark:border-zinc-700 rounded-tl-none"
                 }`}
               >
-                <div className="text-sm font-medium leading-relaxed">
+                {message.role === "assistant" && (
+                  <CopyMessageButton text={message.content} />
+                )}
+                <div
+                  className={`text-sm font-medium leading-relaxed ${message.role === "assistant" ? "pr-6" : ""}`}
+                >
                   {message.role === "assistant" ? (
                     <div className="relative">
                       <MessageRenderer content={message.content} />
@@ -974,6 +981,31 @@ export function MessageList({
 
 function TerminalIcon(props: any) {
   return <span {...props}>💻</span>;
+}
+
+function CopyMessageButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="absolute top-2 right-2 p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all opacity-0 group-hover:opacity-100"
+      title="Copy message"
+      aria-label="Copy message"
+    >
+      {copied ? (
+        <Check className="w-3.5 h-3.5 text-green-500" />
+      ) : (
+        <Copy className="w-3.5 h-3.5" />
+      )}
+    </button>
+  );
 }
 
 // ─── ChatInput ────────────────────────────────────────────────────────────────
