@@ -87,6 +87,17 @@ export function VenueRatingDialog({
     setMounted(true);
   }, []);
 
+  // --- FIX  Lock document body scroll context when open ---
+  useEffect(() => {
+    if (isOpen && mounted) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, mounted]);
+
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
