@@ -22,6 +22,7 @@ import {
   List,
   Copy,
   Check,
+  Mic,
 } from "lucide-react";
 import { RefObject, useState, useEffect, useRef } from "react";
 import { BrainTerminal } from "./BrainTerminal";
@@ -1028,6 +1029,59 @@ export function ChatInput({
   const charCount = safeInput.length;
   const isOverLimit = charCount > MAX_CHARS;
 
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const originalInputRef = useRef("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = (e: any) => {
+          console.error("Speech recognition error:", e.error);
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onresult = (event: any) => {
+        let transcript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        const prefix = originalInputRef.current
+          ? originalInputRef.current +
+            (originalInputRef.current.endsWith(" ") ? "" : " ")
+          : "";
+        onInputChange(prefix + transcript);
+      };
+    }
+  }, [onInputChange]);
+
+  const toggleListening = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      originalInputRef.current = input;
+      recognitionRef.current?.start();
+    }
+  };
+
   let counterColor = "text-zinc-500 dark:text-zinc-400"; // gray
   if (isOverLimit) {
     counterColor = "text-red-500";
@@ -1042,6 +1096,18 @@ export function ChatInput({
         onSubmit={onSubmit}
         className="flex gap-2 p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 focus-within:border-blue-600 transition-all shadow-inner"
       >
+        <button
+          type="button"
+          onClick={toggleListening}
+          className={`p-3 rounded-xl transition-all active:scale-95 shadow-lg group ${
+            isListening
+              ? "bg-red-500 hover:bg-red-600 text-white animate-pulse"
+              : "bg-zinc-200 dark:bg-zinc-800 hover:bg-zinc-300 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300"
+          }`}
+          title={isListening ? "Stop dictation" : "Start dictation"}
+        >
+          <Mic className="w-5 h-5" />
+        </button>
         <input
           type="text"
           value={safeInput}
