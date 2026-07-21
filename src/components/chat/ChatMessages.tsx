@@ -389,23 +389,24 @@ export function VenueChatCard({
 
             {onToggleCompare && (
               <div
-                className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-white/90 dark:bg-black/80 px-2.5 py-1.5 rounded-lg shadow-md backdrop-blur-md"
-                onClick={(e) => e.stopPropagation()}
+                className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-white/90 dark:bg-black/80 px-2.5 py-1.5 rounded-lg shadow-md backdrop-blur-md cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!(!isSelected && compareDisabled)) {
+                    onToggleCompare(venue);
+                  }
+                }}
               >
                 <input
                   type="checkbox"
-                  id={`compare-card-${venue.id}`}
                   checked={isSelected}
-                  onChange={() => onToggleCompare(venue)}
+                  readOnly
                   disabled={!isSelected && compareDisabled}
-                  className="w-4 h-4 accent-text rounded border-zinc-300 focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary-accent),transparent_0.8)] cursor-pointer disabled:opacity-50"
+                  className="w-4 h-4 accent-text rounded border-zinc-300 focus:ring-2 focus:ring-[color-mix(in_srgb,var(--primary-accent),transparent_0.8)] disabled:opacity-50 pointer-events-none"
                 />
-                <label
-                  htmlFor={`compare-card-${venue.id}`}
-                  className="text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer select-none uppercase tracking-tight"
-                >
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 select-none uppercase tracking-tight pointer-events-none">
                   Compare
-                </label>
+                </span>
               </div>
             )}
 

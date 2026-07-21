@@ -403,23 +403,24 @@ export function VenueCard({
           {/* NEW: Compare Checkbox UI */}
           {onToggleCompare && (
             <div
-              className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-md shadow-sm backdrop-blur-sm"
-              onClick={(e) => e.stopPropagation()} // Prevent photo cycle when clicking checkbox
+              className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-md shadow-sm backdrop-blur-sm cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!(!isSelected && compareDisabled)) {
+                  onToggleCompare(venue);
+                }
+              }}
             >
               <input
                 type="checkbox"
-                id={`compare-${venue.id}`}
                 checked={isSelected}
-                onChange={() => onToggleCompare(venue)}
+                readOnly
                 disabled={!isSelected && compareDisabled}
-                className="w-4 h-4 accent-text rounded border-zinc-300 focus:ring-[var(--primary-accent)] cursor-pointer disabled:opacity-50"
+                className="w-4 h-4 accent-text rounded border-zinc-300 focus:ring-[var(--primary-accent)] disabled:opacity-50 pointer-events-none"
               />
-              <label
-                htmlFor={`compare-${venue.id}`}
-                className="text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer select-none"
-              >
+              <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 select-none pointer-events-none">
                 Compare
-              </label>
+              </span>
             </div>
           )}
         </div>
@@ -427,21 +428,25 @@ export function VenueCard({
 
       {/* Fallback Checkbox (If no photos exist) */}
       {photos.length === 0 && onToggleCompare && (
-        <div className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-md shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div
+          className="absolute top-2 right-2 z-20 flex items-center gap-2 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-md shadow-sm border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!(!isSelected && compareDisabled)) {
+              onToggleCompare(venue);
+            }
+          }}
+        >
           <input
             type="checkbox"
-            id={`compare-no-photo-${venue.id}`}
             checked={isSelected}
-            onChange={() => onToggleCompare(venue)}
+            readOnly
             disabled={!isSelected && compareDisabled}
-            className="w-4 h-4 accent-text rounded border-zinc-300 focus:ring-[var(--primary-accent)] cursor-pointer disabled:opacity-50"
+            className="w-4 h-4 accent-text rounded border-zinc-300 focus:ring-[var(--primary-accent)] disabled:opacity-50 pointer-events-none"
           />
-          <label
-            htmlFor={`compare-no-photo-${venue.id}`}
-            className="text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer select-none"
-          >
+          <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 select-none pointer-events-none">
             Compare
-          </label>
+          </span>
         </div>
       )}
 
