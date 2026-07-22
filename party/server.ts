@@ -131,6 +131,16 @@ export default class WorkspaceServer implements Party.Server {
         return;
       }
 
+      if (parsed.type === "ping") {
+        sender.send(
+          JSON.stringify({
+            type: "pong",
+            timestamp: parsed.timestamp,
+          }),
+        );
+        return;
+      }
+
       if (
         parsed.type === "request_room_snapshot" ||
         parsed.type === "request_snapshot"

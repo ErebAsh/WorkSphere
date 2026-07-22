@@ -49,6 +49,10 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Network Telemetry
+  const [rtt, setRtt] = useState<number>(0);
+  const [networkQuality, setNetworkQuality] = useState<"good" | "fair" | "poor" | "unknown">("unknown");
+
   // Refs for WebRTC state
   const localStreamRef = useRef<MediaStream | null>(null);
   const localScreenStreamRef = useRef<MediaStream | null>(null);
@@ -62,6 +66,8 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
   // Intervals
   const bitrateTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioLevelTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rttEmaRef = useRef<number>(0);
 
   useEffect(() => {
     getToken()
@@ -250,6 +256,15 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
     }, 100);
   }, []);
 
+  const startPingLoop = useCallback(() => {
+    if (pingTimerRef.current) clearInterval(pingTimerRef.current);
+    pingTimerRef.current = setInterval(() => {
+      if (socketRef.current) {
+        socketRef.current.send(JSON.stringify({ type: "ping", timestamp: Date.now() }));
+      }
+    }, 2000);
+  }, []);
+
   const handleSignal = useCallback(
     async (msg: SignalMessage) => {
       if (!userId || msg.from === userId) return;
@@ -315,7 +330,22 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
     },
     onMessage(event) {
       try {
-        const data = JSON.parse(event.data) as SignalMessage;
+        const data = JSON.parse(event.data);
+        if (data.type === "pong" && data.timestamp) {
+          const currentRtt = Date.now() - data.timestamp;
+          if (rttEmaRef.current === 0) {
+            rttEmaRef.current = currentRtt;
+          } else {
+            rttEmaRef.current = rttEmaRef.current * 0.7 + currentRtt * 0.3;
+          }
+          setRtt(rttEmaRef.current);
+          
+          if (rttEmaRef.current > 300) setNetworkQuality("poor");
+          else if (rttEmaRef.current > 100) setNetworkQuality("fair");
+          else setNetworkQuality("good");
+          
+          return;
+        }
         if (data.type !== "webrtc-signal") return;
         void handleSignal(data);
       } catch {}
@@ -329,9 +359,11 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
   useEffect(() => {
     startBitrateLoop();
     startAudioMonitoringLoop();
+    startPingLoop();
     return () => {
       if (bitrateTimerRef.current) clearInterval(bitrateTimerRef.current);
       if (audioLevelTimerRef.current) clearInterval(audioLevelTimerRef.current);
+      if (pingTimerRef.current) clearInterval(pingTimerRef.current);
       
       for (const id of [...peersRef.current.keys()]) {
         cleanupPeer(id);
@@ -344,7 +376,23 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
         audioContextRef.current?.close();
       }
     };
-  }, [cleanupPeer, startBitrateLoop, startAudioMonitoringLoop]);
+  }, [cleanupPeer, startBitrateLoop, startAudioMonitoringLoop, startPingLoop]);
+
+  useEffect(() => {
+    if (!localStreamRef.current) return;
+    const audioTrack = localStreamRef.current.getAudioTracks()[0];
+    if (!audioTrack) return;
+    
+    if (networkQuality === "poor") {
+      audioTrack.applyConstraints({ sampleRate: 16000 }).catch(err => {
+        console.warn("Failed to downsample audio:", err);
+      });
+    } else if (networkQuality === "good") {
+      audioTrack.applyConstraints({ sampleRate: 48000 }).catch(err => {
+        console.warn("Failed to restore audio sample rate:", err);
+      });
+    }
+  }, [networkQuality]);
 
   const ensureLocalStream = async () => {
     if (localStreamRef.current) return localStreamRef.current;
@@ -449,6 +497,8 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
     isVideoEnabled,
     isScreenSharing,
     error,
+    rtt,
+    networkQuality,
     toggleAudio,
     toggleVideo,
     toggleScreenShare,
