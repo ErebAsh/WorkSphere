@@ -51,6 +51,7 @@ export async function POST(
       hasQuietZone,
       lighting,
       musicStyle,
+      socketCondition,
       powerTypes,
       outletLocations,
       petsAllowedIndoors,
@@ -123,6 +124,7 @@ export async function POST(
       hasQuietZone,
       lighting,
       musicStyle,
+      socketCondition: socketCondition || null,
       powerTypes: powerTypes || [],
       outletLocations: outletLocations || [],
       petsAllowedIndoors,
@@ -150,6 +152,7 @@ export async function POST(
       hasQuietZone: hasQuietZone || false,
       lighting: lighting || null,
       musicStyle,
+      socketCondition: socketCondition || null,
       powerTypes: powerTypes || [],
       outletLocations: outletLocations || [],
       petsAllowedIndoors: petsAllowedIndoors || false,
@@ -255,9 +258,12 @@ export async function POST(
     allRatings.forEach((r: { noiseLevel: string }) => {
       noiseCounts[r.noiseLevel] = (noiseCounts[r.noiseLevel] || 0) + 1;
     });
-    const dominantNoise = Object.entries(noiseCounts).reduce((a, b) =>
-      b[1] > a[1] ? b : a,
-    )[0];
+    const dominantNoise =
+      Object.keys(noiseCounts).length > 0
+        ? Object.entries(noiseCounts).reduce((a: [string, number], b: [string, number]) =>
+          b[1] > a[1] ? b : a,
+        )[0]
+        : null;
 
     // Most common lighting
     const lightingCounts: Record<string, number> = {};
@@ -268,12 +274,11 @@ export async function POST(
     });
     const dominantLighting =
       Object.keys(lightingCounts).length > 0
-        ? Object.entries(lightingCounts).reduce((a, b) =>
-            b[1] > a[1] ? b : a,
-          )[0]
+        ? Object.entries(lightingCounts).reduce((a: [string, number], b: [string, number]) =>
+          b[1] > a[1] ? b : a,
+        )[0]
         : null;
 
-    // Most common outlet density
     const densityCounts: Record<string, number> = {};
     allRatings.forEach((r: any) => {
       if (r.outletDensity) {
@@ -283,10 +288,22 @@ export async function POST(
     });
     const dominantDensity =
       Object.keys(densityCounts).length > 0
-        ? Object.entries(densityCounts).reduce((a, b) =>
-            b[1] > a[1] ? b : a,
-          )[0]
+        ? Object.entries(densityCounts).reduce((a: [string, number], b: [string, number]) =>
+          b[1] > a[1] ? b : a,
+        )[0]
         : "none";
+
+    // Most common socket condition
+    const socketCounts: Record<string, number> = {};
+    allRatings.forEach((r: any) => {
+      if (r.socketCondition) {
+        socketCounts[r.socketCondition] = (socketCounts[r.socketCondition] || 0) + 1;
+      }
+    });
+    const dominantSocketCondition =
+      Object.keys(socketCounts).length > 0
+        ? Object.entries(socketCounts).reduce((a: [string, number], b: [string, number]) => (b[1] > a[1] ? b : a))[0]
+        : null;
 
     // Aggregate power types (unique union of all powerTypes in all ratings)
     const aggregatedPowerTypes = Array.from(
@@ -305,8 +322,8 @@ export async function POST(
     const avgSpeed =
       validSpeeds.length > 0
         ? Math.round(
-            validSpeeds.reduce((sum, s) => sum + s, 0) / validSpeeds.length,
-          )
+          validSpeeds.reduce((sum: number, s: number) => sum + s, 0) / validSpeeds.length,
+        )
         : null;
 
     // Most common music style
@@ -318,7 +335,7 @@ export async function POST(
     });
     const dominantMusic =
       Object.keys(musicCounts).length > 0
-        ? Object.entries(musicCounts).reduce((a, b) => (b[1] > a[1] ? b : a))[0]
+        ? Object.entries(musicCounts).reduce((a: [string, number], b: [string, number]) => (b[1] > a[1] ? b : a))[0]
         : null;
     const petsAllowedIndoorsPercent =
       (allRatings.filter((r: any) => r.petsAllowedIndoors).length /
@@ -354,6 +371,7 @@ export async function POST(
         hasQuietZone: quietZonePercent > 50,
         lighting: dominantLighting,
         musicStyle: dominantMusic,
+        socketCondition: dominantSocketCondition,
         powerTypes: aggregatedPowerTypes,
         outletLocations: aggregatedOutletLocations,
         petsAllowedIndoors: petsAllowedIndoorsPercent > 50,
