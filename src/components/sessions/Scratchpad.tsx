@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import * as Y from "yjs";
 import usePartySocket from "partysocket/react";
-import { CryptoManager, bufferToBase64, base64ToBuffer } from "@/lib/e2ee/CryptoManager";
+import { CryptoManager } from "@/lib/e2ee/CryptoManager";
 import { KeyStore } from "@/lib/e2ee/KeyStore";
-import { Lock, Unlock, Key, Loader2, Share2 } from "lucide-react";
+import { Unlock, Key, Loader2, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import {
   generateKeyPair,
@@ -127,7 +127,7 @@ export default function Scratchpad({ sessionId }: Props) {
           setIsNegotiating(false);
           return;
         }
-      } catch (err) {
+      } catch (_err) {
         // Ignore non-json or decryption errors
       }
     },
@@ -166,7 +166,7 @@ export default function Scratchpad({ sessionId }: Props) {
     if (!docRef.current) return;
     
     const doc = docRef.current;
-    const handleUpdate = async (update: Uint8Array, origin: any) => {
+    const handleUpdate = async (update: Uint8Array, _origin: any) => {
       if (isLocalUpdateRef.current || !cryptoKeyRef.current) return;
       
       try {

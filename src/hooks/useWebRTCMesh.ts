@@ -365,7 +365,8 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
       if (audioLevelTimerRef.current) clearInterval(audioLevelTimerRef.current);
       if (pingTimerRef.current) clearInterval(pingTimerRef.current);
       
-      for (const id of [...peersRef.current.keys()]) {
+      const currentPeers = peersRef.current;
+      for (const id of [...currentPeers.keys()]) {
         cleanupPeer(id);
       }
       
@@ -417,7 +418,7 @@ export function useWebRTCMesh({ roomId, userId }: Options) {
       }
       
       return stream;
-    } catch (err) {
+    } catch (_err) {
       setError("Could not access camera or microphone.");
       return null;
     }
