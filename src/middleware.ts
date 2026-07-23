@@ -10,10 +10,11 @@ import {
 } from "./lib/csrf";
 
 function generateCsp(nonce: string): string {
+  const isDev = process.env.NODE_ENV === "development";
   return [
     `base-uri 'self'`,
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' https://cdn.clerk.com`,
+    `script-src 'self' 'nonce-${nonce}' https://cdn.clerk.com ${isDev ? "'unsafe-eval' https://*.clerk.accounts.dev" : ""}`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `font-src 'self' https://fonts.gstatic.com data:`,
     `img-src 'self' https://images.unsplash.com https://*.unsplash.com https://res.cloudinary.com data: blob:`,
