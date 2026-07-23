@@ -107,7 +107,7 @@ export default class WorkspaceServer implements Party.Server {
     });
 
     // Also handle simple presence via standard WebSockets
-    conn.addEventListener("message", (event) => {
+    conn.addEventListener("message", (event: { data: unknown }) => {
       try {
         const data = JSON.parse(event.data as string);
         if (data.type === "presence" || data.type === "cursor") {

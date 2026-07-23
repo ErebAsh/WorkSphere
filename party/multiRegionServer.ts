@@ -204,7 +204,7 @@ export default class MultiRegionWorkspaceServer implements Party.Server {
     });
 
     // Handle presence/cursor messages with cross-region sync
-    conn.addEventListener("message", (event) => {
+    conn.addEventListener("message", (event: { data: unknown }) => {
       try {
         const data = JSON.parse(event.data as string);
 
